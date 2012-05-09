@@ -9,7 +9,7 @@ namespace SMartGallery
     /// <summary>
     /// SQLite3-Connector
     /// </summary>
-    class Database
+    class Database : IDisposable
     {
         /// <summary>
         /// the actual connection
@@ -92,12 +92,20 @@ namespace SMartGallery
         /// </summary>
         /// <param name="tableName">Name of the Table</param>
         /// <param name="commandText">commands for field definition</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100")]
         private void createTable(string tableName, string commandText)
         {
-            SQLiteCommand command = new SQLiteCommand(connection);
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + commandText + ")";
-            command.ExecuteNonQuery();
-            command.Dispose();
+            SQLiteCommand command = null;
+            try
+            {
+                command = new SQLiteCommand(connection);
+                command.CommandText = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + commandText + ")";
+                command.ExecuteNonQuery();
+            }
+            finally
+            {
+                command.Dispose();
+            }
         }
 
         /// <summary>
@@ -146,6 +154,19 @@ namespace SMartGallery
                 qVoteDownPath.Value = path;
                 qVoteDown.ExecuteNonQuery();
             }
+        }
+
+        /// <summary>
+        /// Disposes the connection and all queries.
+        /// </summary>
+        public void Dispose()
+        {
+            qRandomPicture.Dispose();
+            qInsertPicture.Dispose();
+            qVoteUp.Dispose();
+            qVoteDown.Dispose();
+
+            connection.Dispose();
         }
     }
 }
